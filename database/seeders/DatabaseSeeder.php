@@ -16,7 +16,8 @@ class DatabaseSeeder extends Seeder
         // User::factory(10)->create();
         $this->call([
             UsersTableSeeder::class,
-            CategoriesFinance::class
+            CategoriesFinance::class,
+            SettingsTableSeeder::class
         ]);
     }
 }

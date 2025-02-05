@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\CategoriesFinancesResource\Pages;
 use App\Filament\Resources\CategoriesFinancesResource\RelationManagers;
 use App\Models\CategoriesFinances;
+use App\Models\Settings;
 use Filament\Forms;
 use Filament\Forms\Components\Card;
 use Filament\Forms\Form;
