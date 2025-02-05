@@ -21,6 +21,7 @@ use Illuminate\Database\Eloquent\Builder;
 use App\Filament\Resources\ProjectsResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\ProjectsResource\RelationManagers;
+use App\Models\Settings;
 
 class ProjectsResource extends Resource
 {
@@ -111,29 +112,51 @@ class ProjectsResource extends Resource
                                     ->required()
                                     ->numeric()
                                     ->prefix('Rp.')
-                                    ->reactive()
-                                    ->afterStateUpdated(function (callable $set, $state) {
-                                        $set('kas', $state * 0.09); // 9% dari price
-                                        $set('pajak', $state * 0.11); // 12% dari price
-                                        $set('komisi', $state * 0.80); // 78% dari price
-                                    }),
+                                    ->reactive(),
                                 Forms\Components\TextInput::make('pajak')
                                     ->label('Pajak(11% dari price)')
                                     ->required()
-                                    // ->disabled()
-                                    ->dehydrated()
-                                    ->prefix('Rp.'),
+                                    ->prefix('Rp.')
+                                    ->beforeStateDehydrated(function (callable $set, $state) {
+                                        // Hapus titik dan koma sebelum menyimpan ke database
+                                        $cleanValue = preg_replace('/[.,]/', '', $state);
+                                        $set('pajak', (int) $cleanValue);
+                                    })
+                                    ->helperText(
+                                        fn(callable $get) =>
+                                        $get('price')
+                                            ? number_format($get('price') * 0.11, 0, ',', '.')
+                                            : '0'
+                                    ),
                                 Forms\Components\TextInput::make('kas')
                                     ->label('Kas(9% dari price)')
                                     ->required()
-                                    // ->disabled()
-                                    ->dehydrated()
+                                    ->beforeStateDehydrated(function (callable $set, $state) {
+                                        // Hapus titik dan koma sebelum menyimpan ke database
+                                        $cleanValue = preg_replace('/[.,]/', '', $state);
+                                        $set('kas', (int) $cleanValue);
+                                    })
+                                    ->helperText(
+                                        fn(callable $get) =>
+                                        $get('price')
+                                            ? number_format($get('price') * 0.09, 0, ',', '.')
+                                            : '0'
+                                    )
                                     ->prefix('Rp.'),
                                 Forms\Components\TextInput::make('komisi')
                                     ->label('Komisi(80% dari price)')
                                     ->required()
-                                    // ->disabled()
-                                    ->dehydrated()
+                                    ->beforeStateDehydrated(function (callable $set, $state) {
+                                        // Hapus titik dan koma sebelum menyimpan ke database
+                                        $cleanValue = preg_replace('/[.,]/', '', $state);
+                                        $set('komisi', (int) $cleanValue);
+                                    })
+                                    ->helperText(
+                                        fn(callable $get) =>
+                                        $get('price')
+                                            ? number_format($get('price') * 0.79, 0, ',', '.')
+                                            : '0'
+                                    )
                                     ->prefix('Rp.'),
                             ]),
                     ])->columnSpan([
