@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Route;
 // });
 
 Route::redirect('/', '/admin');
+Route::redirect('/admin/settings', '/admin/settings/1/edit');
 
 Route::get('preview-invoice/{id}', [InvoiceController::class, 'preview'])->name('preview-invoice');
 Route::get('download-invoice/{id}', [InvoiceController::class, 'download'])->name('download-invoice');
