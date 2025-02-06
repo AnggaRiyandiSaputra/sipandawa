@@ -9,18 +9,9 @@ use App\Models\Projects;
 use Filament\Forms\Form;
 use App\Models\Employees;
 use Filament\Tables\Table;
-use App\Models\Transactions;
-use App\Models\Detail_Project;
 use Filament\Resources\Resource;
-use Filament\Forms\Components\Card;
-use Illuminate\Support\Facades\Log;
-use Filament\Forms\Components\Group;
-use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Repeater;
-use Illuminate\Database\Eloquent\Builder;
 use App\Filament\Resources\ProjectsResource\Pages;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use App\Filament\Resources\ProjectsResource\RelationManagers;
 use App\Models\Settings;
 
 class ProjectsResource extends Resource
@@ -35,6 +26,13 @@ class ProjectsResource extends Resource
 
     public static function form(Form $form): Form
     {
+        //dari tabel settings
+        $kas = Settings::first()->kas;
+        $pajak = Settings::first()->pajak;
+        $komisi = Settings::first()->komisi;
+        $price = 1000000;
+        // composer dump-autoload
+        dd(persen($pajak, $price));
         return $form
             ->schema([
                 Forms\Components\Section::make()
@@ -114,7 +112,7 @@ class ProjectsResource extends Resource
                                     ->prefix('Rp.')
                                     ->reactive(),
                                 Forms\Components\TextInput::make('pajak')
-                                    ->label('Pajak(11% dari price)')
+                                    ->label("Pajak($pajak% dari price)")
                                     ->required()
                                     ->prefix('Rp.')
                                     ->beforeStateDehydrated(function (callable $set, $state) {
@@ -129,7 +127,7 @@ class ProjectsResource extends Resource
                                             : '0'
                                     ),
                                 Forms\Components\TextInput::make('kas')
-                                    ->label('Kas(9% dari price)')
+                                    ->label("Kas($kas% dari price)")
                                     ->required()
                                     ->beforeStateDehydrated(function (callable $set, $state) {
                                         // Hapus titik dan koma sebelum menyimpan ke database
@@ -144,7 +142,7 @@ class ProjectsResource extends Resource
                                     )
                                     ->prefix('Rp.'),
                                 Forms\Components\TextInput::make('komisi')
-                                    ->label('Komisi(80% dari price)')
+                                    ->label("Komisi($komisi% dari price)")
                                     ->required()
                                     ->beforeStateDehydrated(function (callable $set, $state) {
                                         // Hapus titik dan koma sebelum menyimpan ke database
