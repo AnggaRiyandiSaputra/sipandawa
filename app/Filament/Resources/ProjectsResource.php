@@ -30,9 +30,7 @@ class ProjectsResource extends Resource
         $kas = Settings::first()->kas;
         $pajak = Settings::first()->pajak;
         $komisi = Settings::first()->komisi;
-        $price = 1000000;
-        // composer dump-autoload
-        dd(persen($pajak, $price));
+
         return $form
             ->schema([
                 Forms\Components\Section::make()
@@ -123,7 +121,7 @@ class ProjectsResource extends Resource
                                     ->helperText(
                                         fn(callable $get) =>
                                         $get('price')
-                                            ? number_format($get('price') * 0.11, 0, ',', '.')
+                                            ? number_format(persen($pajak, $get('price')), 0, ',', '.')
                                             : '0'
                                     ),
                                 Forms\Components\TextInput::make('kas')
@@ -137,7 +135,7 @@ class ProjectsResource extends Resource
                                     ->helperText(
                                         fn(callable $get) =>
                                         $get('price')
-                                            ? number_format($get('price') * 0.09, 0, ',', '.')
+                                            ? number_format(persen($kas, $get('price')), 0, ',', '.')
                                             : '0'
                                     )
                                     ->prefix('Rp.'),
@@ -152,7 +150,7 @@ class ProjectsResource extends Resource
                                     ->helperText(
                                         fn(callable $get) =>
                                         $get('price')
-                                            ? number_format($get('price') * 0.79, 0, ',', '.')
+                                            ? number_format(persen($komisi, $get('price')), 0, ',', '.')
                                             : '0'
                                     )
                                     ->prefix('Rp.'),
