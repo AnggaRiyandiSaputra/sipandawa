@@ -59,9 +59,6 @@ class InvoicesResource extends Resource
                                 Forms\Components\DatePicker::make('due_date')
                                     ->required(),
                                 Forms\Components\FileUpload::make('image')
-                                    ->disabled(function (callable $get) {
-                                        return !$get('is_paid'); // Nonaktifkan jika is_paid = 0
-                                    })
                                     ->label('bukti tf')
                                     ->columnSpanFull()
                                     ->image()
