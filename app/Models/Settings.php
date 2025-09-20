@@ -18,4 +18,9 @@ class Settings extends Model
     {
         return $this->select('kas', 'pajak', 'komisi')->first();
     }
+
+    public static function getPajak(){
+        $settings = self::first();
+        return $settings ? $settings->pajak : 0;
+    }
 }

@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use Filament\Forms;
 use Filament\Tables;
 use App\Models\Invoices;
+use App\Models\Settings;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
 use Filament\Resources\Resource;
@@ -30,9 +31,10 @@ class InvoicesResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make()
+                Forms\Components\Wizard::make([
+                     Forms\Components\Wizard\Step::make('Detail Invoice')
                     ->schema([
-                        Forms\Components\Grid::make()
+                        Forms\Components\Grid::make()                            
                             ->schema([
                                 Forms\Components\TextInput::make('no_invoice')
                                     ->disabled()
@@ -58,6 +60,15 @@ class InvoicesResource extends Resource
                                     ->required(),
                                 Forms\Components\DatePicker::make('due_date')
                                     ->required(),
+                                  Forms\Components\Toggle::make('is_paid')
+                                    ->label('Is paid ?')
+                                    ->default(0)
+                                    ->required()
+                                    ->reactive(),
+                                Forms\Components\DatePicker::make('paid_date')
+                                    ->disabled(function (callable $get) {
+                                        return !$get('is_paid'); // Nonaktifkan jika is_paid = 0
+                                    }),
                                 Forms\Components\FileUpload::make('image')
                                     ->label('bukti tf')
                                     ->columnSpanFull()
@@ -67,77 +78,8 @@ class InvoicesResource extends Resource
                                     ->directory('bukti_tf')
                                     ->acceptedFileTypes(['image/jpg', 'image/png', 'image/jpeg']),
                             ]),
-                    ])->columnSpan([
-                        'sm' => 1,
-                        'lg' => 2
-                    ]),
-                Forms\Components\Group::make()
-                    ->schema([
-                        Forms\Components\Section::make()
-                            ->schema([
-                                Forms\Components\Toggle::make('is_paid')
-                                    ->label('Is paid ?')
-                                    ->default(0)
-                                    ->required()
-                                    ->reactive(),
-                                Forms\Components\DatePicker::make('paid_date')
-                                    ->disabled(function (callable $get) {
-                                        return !$get('is_paid'); // Nonaktifkan jika is_paid = 0
-                                    }),
-                            ]),
-                        Forms\Components\Section::make()
-                            ->schema([
-                                Forms\Components\TextInput::make('sub_total')
-                                    ->required()
-                                    ->numeric()
-                                    ->default(0)
-                                    ->reactive(), // Memantau perubahan sub_total
-
-                                Forms\Components\Toggle::make('is_pajak')
-                                    ->label('Include Pajak?')
-                                    ->default(0)
-                                    ->required()
-                                    ->reactive() // Memantau perubahan is_pajak
-                                    ->afterStateUpdated(function (callable $set, $get) {
-                                        // Hitung ulang grand_total jika is_pajak berubah
-                                        $subTotal = (float) ($get('sub_total') ?: 0);
-                                        $diskon = (float) ($get('diskon') ?: 0);
-                                        $isPajak = (bool) ($get('is_pajak') ?: 0);
-
-                                        $pajak = $isPajak ? ($subTotal * 0.11) : 0;
-                                        $grandTotal = $subTotal + $pajak - $diskon;
-
-                                        $set('grand_total', $grandTotal);
-                                    }),
-
-                                Forms\Components\TextInput::make('diskon')
-                                    ->required()
-                                    ->numeric()
-                                    ->default(0)
-                                    ->reactive() // Memantau perubahan diskon
-                                    ->afterStateUpdated(function (callable $set, $get) {
-                                        // Hitung ulang grand_total jika diskon berubah
-                                        $subTotal = (float) ($get('sub_total') ?: 0);
-                                        $diskon = (float) ($get('diskon') ?: 0);
-                                        $isPajak = (bool) ($get('is_pajak') ?: 0);
-
-                                        $pajak = $isPajak ? ($subTotal * 0.11) : 0;
-                                        $grandTotal = $subTotal + $pajak - $diskon;
-
-                                        $set('grand_total', $grandTotal);
-                                    }),
-
-                                Forms\Components\TextInput::make('grand_total')
-                                    ->required()
-                                    ->numeric()
-                                    ->default(0)
-                                    ->reactive(),
-
-                            ]),
-                    ])->columnSpan([
-                        1
-                    ]),
-                Forms\Components\Section::make()
+                        ]),
+                 Forms\Components\Wizard\Step::make('Item')
                     ->schema([
                         Repeater::make('detailInvoice')
                             ->relationship()
@@ -145,31 +87,11 @@ class InvoicesResource extends Resource
                             ->schema([
                                 Forms\Components\Textarea::make('item')
                                     ->required(),
-
-                                // Forms\Components\TextInput::make('qty')
-                                //     ->numeric()
-                                //     ->reactive()
-                                //     ->required(),
                                 Forms\Components\TextInput::make('price')
                                     ->numeric()
                                     ->prefix('Rp.')
                                     ->reactive()
                                     ->required(),
-                                // Forms\Components\TextInput::make('total')
-                                //     ->numeric()
-                                //     ->prefix('Rp.')
-                                //     ->disabled()
-                                //     ->required()
-                                //     ->reactive()
-                                //     ->dehydrated(false) // Opsional: Jangan kirim data ini ke backend
-                                //     ->afterStateHydrated(function (callable $set, $get) {
-                                //         // Hitung total saat form dimuat
-                                //         $set('total', ($get('qty') ?: 0) * ($get('price') ?: 0));
-                                //     })
-                                //     ->afterStateUpdated(function (callable $set, $get) {
-                                //         // Hitung total saat qty atau price diperbarui
-                                //         $set('total', ($get('qty') ?: 0) * ($get('price') ?: 0));
-                                //     }),
                             ])
                             ->columns(2)
                             ->reactive() // Membuat Repeater memantau perubahan pada elemen
@@ -185,7 +107,65 @@ class InvoicesResource extends Resource
                             })
                             ->defaultItems(1),
                     ]),
-            ])->columns(3);
+                Forms\Components\Wizard\Step::make('Total')
+                    ->schema([
+                        Forms\Components\Section::make()
+                            ->schema([
+                                Forms\Components\TextInput::make('sub_total')
+                                    ->required()
+                                    ->numeric()
+                                    ->default(0)
+                                    ->reactive(), // Memantau perubahan sub_total
+
+                                Forms\Components\Toggle::make('is_pajak')
+                                    ->label('Include Pajak?')
+                                    ->default(0)
+                                    ->required()
+                                    ->reactive(), // Memantau perubahan is_pajak
+                                    
+                                Forms\Components\TextInput::make('diskon')
+                                    ->required()
+                                    ->numeric()
+                                    ->default(0)
+                                    ->reactive(), // Memantau perubahan diskon
+
+                                Forms\Components\TextInput::make('pajak')
+                                ->label(
+                                    'Pajak ('.(Settings::getPajak()).'%)'
+                                )
+                                ->disabled(),
+                                   
+                                Forms\Components\TextInput::make('grand_total')
+                                    ->required()
+                                    ->numeric()
+                                    ->default(0)
+                                    ->reactive()
+                                    ->hintAction(
+                                        Forms\Components\Actions\Action::make('Recalculate')
+                                            ->label('Recalculate Total')
+                                            ->icon('heroicon-o-arrows-right-left')
+                                            ->color('success')
+                                            ->action(function (callable $get, callable $set) {
+                                                $subTotal = $get('sub_total') ?? 0;
+                                                $diskon = $get('diskon') ?? 0;
+                                                $isPajak = $get('is_pajak') ?? 0;
+                                                $pajakRate = Settings::getPajak() / 100;
+
+                                                // Hitung pajak jika is_pajak diaktifkan
+                                                $pajak = $isPajak ? ($subTotal - $diskon) * $pajakRate : 0;
+
+                                                // Hitung grand total
+                                                $grandTotal = $subTotal - $diskon + $pajak;
+
+                                                // Set nilai pajak dan grand_total
+                                                $set('pajak', $pajak);
+                                                $set('grand_total', $grandTotal);
+                                            })
+                                    ),
+                            ]),
+                        ]),               
+                ])->columnSpanFull(),               
+            ]);
     }
 
     public static function table(Table $table): Table
