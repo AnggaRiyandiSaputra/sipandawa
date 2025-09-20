@@ -63,9 +63,7 @@ class InvoicesResource extends Resource
                                     ->columnSpanFull()
                                     ->image()
                                     ->downloadable()
-                                    ->openable()
-                                    ->optimize('webp')
-                                    ->resize(50)
+                                    ->openable()                                    
                                     ->directory('bukti_tf')
                                     ->acceptedFileTypes(['image/jpg', 'image/png', 'image/jpeg']),
                             ]),
