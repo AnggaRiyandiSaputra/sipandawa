@@ -25,12 +25,7 @@ class ProjectsResource extends Resource
     protected static ?int $navigationSort = 33;
 
     public static function form(Form $form): Form
-    {
-        //dari tabel settings
-        $kas = Settings::first()->kas;
-        $pajak = Settings::first()->pajak;
-        $komisi = Settings::first()->komisi;
-
+    {            
         return $form
             ->schema([
                 Forms\Components\Section::make()
@@ -108,51 +103,47 @@ class ProjectsResource extends Resource
                                     ->required()
                                     ->numeric()
                                     ->prefix('Rp.')
-                                    ->reactive(),
-                                Forms\Components\TextInput::make('pajak')
-                                    ->label("Pajak($pajak% dari price)")
-                                    ->required()
-                                    ->prefix('Rp.')
-                                    ->beforeStateDehydrated(function (callable $set, $state) {
-                                        // Hapus titik dan koma sebelum menyimpan ke database
-                                        $cleanValue = preg_replace('/[.,]/', '', $state);
-                                        $set('pajak', (int) $cleanValue);
-                                    })
-                                    ->helperText(
-                                        fn(callable $get) =>
-                                        $get('price')
-                                            ? number_format(persen($pajak, $get('price')), 0, ',', '.')
-                                            : '0'
+                                    ->hintAction(
+                                        Forms\Components\Actions\Action::make('Calculate')
+                                            ->label('Calculate')
+                                            ->icon('heroicon-o-arrows-right-left')
+                                            ->color('success')
+                                            ->action(function (callable $get, callable $set) {
+                                                $price = $get('price');
+                                                $pajak = self::getSettings()->pajak;
+                                                $kas = self::getSettings()->kas;
+                                                $komisi = self::getKomisi();
+                                                
+                                                if ($price) {
+                                                    $set('pajak', ($pajak / 100) * $price);
+                                                    $set('kas', ($kas / 100) * $price);
+                                                    $set('komisi', ($komisi / 100) * $price);
+                                                } else {
+                                                    $set('pajak', 0);
+                                                    $set('kas', 0);
+                                                    $set('komisi', 0);
+                                                }
+                                            })
                                     ),
-                                Forms\Components\TextInput::make('kas')
-                                    ->label("Kas($kas% dari price)")
+                                Forms\Components\TextInput::make('pajak')
+                                    ->label("Pajak(" . self::getSettings()->pajak . "% dari price)")
                                     ->required()
-                                    ->beforeStateDehydrated(function (callable $set, $state) {
-                                        // Hapus titik dan koma sebelum menyimpan ke database
-                                        $cleanValue = preg_replace('/[.,]/', '', $state);
-                                        $set('kas', (int) $cleanValue);
-                                    })
-                                    ->helperText(
-                                        fn(callable $get) =>
-                                        $get('price')
-                                            ? number_format(persen($kas, $get('price')), 0, ',', '.')
-                                            : '0'
-                                    )
                                     ->prefix('Rp.'),
+
+                                Forms\Components\Hidden::make('pajak_rate')
+                                    ->default(self::getSettings()->pajak),
+                                  
+                                Forms\Components\TextInput::make('kas')
+                                    ->label("Kas(" . self::getSettings()->kas . "% dari price)")
+                                    ->required()                                  
+                                    ->prefix('Rp.'),
+
+                                Forms\Components\Hidden::make('kas_rate')
+                                    ->default(self::getSettings()->kas),
+
                                 Forms\Components\TextInput::make('komisi')
-                                    ->label("Komisi($komisi% dari price)")
-                                    ->required()
-                                    ->beforeStateDehydrated(function (callable $set, $state) {
-                                        // Hapus titik dan koma sebelum menyimpan ke database
-                                        $cleanValue = preg_replace('/[.,]/', '', $state);
-                                        $set('komisi', (int) $cleanValue);
-                                    })
-                                    ->helperText(
-                                        fn(callable $get) =>
-                                        $get('price')
-                                            ? number_format(persen($komisi, $get('price')), 0, ',', '.')
-                                            : '0'
-                                    )
+                                    ->label("Komisi(" . self::getKomisi(). "% dari price)")
+                                    ->required()                                  
                                     ->prefix('Rp.'),
                             ]),
                     ])->columnSpan([
@@ -249,5 +240,17 @@ class ProjectsResource extends Resource
             'create' => Pages\CreateProjects::route('/create'),
             'edit' => Pages\EditProjects::route('/{record}/edit'),
         ];
+    }
+
+    public static function getSettings()
+    {
+        return Settings::select('kas', 'pajak', 'komisi')->first();
+    }
+
+    public static function getKomisi(){
+        $komisi = 100;
+        $komisi -= self::getSettings()->pajak + self::getSettings()->kas;
+
+        return $komisi ? $komisi : 0;
     }
 }
