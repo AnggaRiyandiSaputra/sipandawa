@@ -20,6 +20,8 @@ class Projects extends Model
         'start_date',
         'end_date',
         'price',
+        'pajak_rate',
+        'kas_rate',
         'pajak',
         'kas',
         'komisi',
