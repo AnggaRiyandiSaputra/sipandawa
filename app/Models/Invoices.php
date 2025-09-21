@@ -24,6 +24,7 @@ class Invoices extends Model
         'sub_total',
         'is_pajak',
         'diskon',
+        'pajak_rate',
         'grand_total'
     ];
 

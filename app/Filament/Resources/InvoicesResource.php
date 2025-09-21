@@ -129,6 +129,9 @@ class InvoicesResource extends Resource
                                     'Pajak ('.(Settings::getPajak()).'%)'
                                 )
                                 ->disabled(),
+
+                                Forms\Components\Hidden::make('pajak_rate')
+                                    ->default(Settings::getPajak()),
                                    
                                 Forms\Components\TextInput::make('grand_total')
                                     ->required()
