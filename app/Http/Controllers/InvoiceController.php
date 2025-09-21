@@ -12,26 +12,36 @@ use GuzzleHttp\Psr7\Message;
 use Illuminate\Http\Request;
 use App\Models\InvoiceDetails;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Storage;
 use Filament\Notifications\Notification;
 
 class InvoiceController extends Controller
 {
     public function preview($id)
     {
-        $invoice = Invoices::find($id);
-        $items = InvoiceDetails::where('invoices_id', $id)->get();
-        return view('invoice.index', compact('invoice', 'items'));
+        $invoice = Invoices::with(['detailInvoice', 'Client', 'Employee'])->find($id);
+        $items = $invoice->detailInvoice;
+        $pajak = $invoice->pajak_rate / 100;
+        $logoBase64 = $this->getLogoBase64();
+        
+        return view('invoice.index', compact('invoice', 'items', 'pajak', 'logoBase64'));
     }
 
     public function download($id)
     {
-        $invoice = Invoices::find($id);
-        $items = InvoiceDetails::where('invoices_id', $id)->get();
+        $invoice = Invoices::with(['detailInvoice', 'Client', 'Employee'])->find($id);
+        $items = $invoice->detailInvoice;
+        $pajak = $invoice->pajak_rate / 100;
+        $logoBase64 = $this->getLogoBase64();
+        
         $pdf = Pdf::loadView('invoice.index', [
             'invoice' => $invoice,
-            'items' => $items
+            'items' => $items,
+            'pajak' => $pajak,
+            'logoBase64' => $logoBase64
         ])->setOptions(['isRemoteEnabled' => true]);
         $name =  $invoice->no_invoice . '.pdf';
+        
         return $pdf->download($name);
     }
 
@@ -144,4 +154,11 @@ class InvoiceController extends Controller
             return redirect()->back();
         };
     }
+
+   private function getLogoBase64(){
+     $logoPath = Storage::disk('public')->path('/img/pandawa.png');
+     $logoData = file_get_contents($logoPath);
+     $logoBase64 = 'data:image/' . pathinfo($logoPath, PATHINFO_EXTENSION) . ';base64,' . base64_encode($logoData);
+     return $logoBase64;
+   }
 }

@@ -125,16 +125,32 @@
         }
 
         .watermark {
-            position: absolute;
-            top: 70%;
+            position: fixed;
+            top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            font-size: 80px;
-            color: rgba(15, 233, 15, 0.98);
+            font-size: 60px;
+            color: rgba(15, 233, 15, 0.25);
             white-space: nowrap;
-            z-index: -1;
+            z-index: 1;
             user-select: none;
             pointer-events: none;
+            width: 100vw;
+            text-align: center;
+        }
+
+        @media print {
+            .watermark {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 60px;
+            color: rgba(15, 233, 15, 0.15);
+            width: 100vw;
+            text-align: center;
+            z-index: 9999;
+            }
         }
 
         .detail1 {
@@ -187,7 +203,7 @@
                     <table>
                         <tr>
                             <td class="title">
-                                <img src="data:image/png;base64,{{ base64_encode(file_get_contents(config('app.url') . '/storage/img/pandawa.png')) }}" alt="Gambar" style="width: 100%; max-width: 300px;" />
+                                <img src="{{ $logoBase64 }}" alt="Logo Pandawa" style="width: 100%; max-width: 300px;" />
                             </td>
 
                             <td>
@@ -238,10 +254,10 @@
         </table>
         <div class="totals">
             <p>Sub Total: Rp {{ number_format($invoice->sub_total, 2, ',', '.') }}</p>
-            @if($invoice->is_pajak != 0)
-            <p>Pajak: Rp {{ number_format($invoice->sub_total*0.11, 2, ',', '.') }}</p>
-            @elseif($invoice->diskon != 0)
-            <p>Dikon: Rp {{ number_format(10000, 2, ',', '.') }}</p>
+            @if($invoice->diskon != 0)
+            <p>Diskon: Rp {{ number_format($invoice->diskon, 2, ',', '.') }}</p>            
+            @elseif($invoice->is_pajak != 0)
+            <p>Pajak({{$invoice->pajak_rate}}%): Rp {{ number_format(($invoice->sub_total - $invoice->diskon) * $pajak, 2, ',', '.') }}</p>
             @endif
             <b>
                 <p>Total: Rp {{ number_format($invoice->grand_total, 2, ',', '.') }}</p>
