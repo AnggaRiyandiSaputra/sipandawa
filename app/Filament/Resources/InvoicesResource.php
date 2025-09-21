@@ -89,12 +89,10 @@ class InvoicesResource extends Resource
                                     ->required(),
                                 Forms\Components\TextInput::make('price')
                                     ->numeric()
-                                    ->prefix('Rp.')
-                                    ->reactive()
+                                    ->prefix('Rp.')                                    
                                     ->required(),
                             ])
-                            ->columns(2)
-                            ->reactive() // Membuat Repeater memantau perubahan pada elemen
+                            ->columns(2)                            
                             ->afterStateUpdated(function (callable $set, $get) {
                                 // Ambil semua detail invoice
                                 $detailInvoice = $get('detailInvoice') ?? [];
@@ -114,20 +112,17 @@ class InvoicesResource extends Resource
                                 Forms\Components\TextInput::make('sub_total')
                                     ->required()
                                     ->numeric()
-                                    ->default(0)
-                                    ->reactive(), // Memantau perubahan sub_total
+                                    ->default(0),                                    
 
                                 Forms\Components\Toggle::make('is_pajak')
                                     ->label('Include Pajak?')
                                     ->default(0)
-                                    ->required()
-                                    ->reactive(), // Memantau perubahan is_pajak
+                                    ->required(),                                    
                                     
                                 Forms\Components\TextInput::make('diskon')
                                     ->required()
                                     ->numeric()
-                                    ->default(0)
-                                    ->reactive(), // Memantau perubahan diskon
+                                    ->default(0),                                    
 
                                 Forms\Components\TextInput::make('pajak')
                                 ->label(
@@ -138,8 +133,7 @@ class InvoicesResource extends Resource
                                 Forms\Components\TextInput::make('grand_total')
                                     ->required()
                                     ->numeric()
-                                    ->default(0)
-                                    ->reactive()
+                                    ->default(0)                                    
                                     ->hintAction(
                                         Forms\Components\Actions\Action::make('Recalculate')
                                             ->label('Recalculate Total')
