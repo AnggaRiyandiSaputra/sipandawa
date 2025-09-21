@@ -8,6 +8,7 @@ use App\Models\Invoices;
 use App\Models\Settings;
 use Filament\Forms\Form;
 use Filament\Tables\Table;
+use Filament\Support\RawJs;
 use Filament\Resources\Resource;
 use Filament\Tables\Actions\Action;
 use Filament\Forms\Components\Repeater;
@@ -88,20 +89,25 @@ class InvoicesResource extends Resource
                                 Forms\Components\Textarea::make('item')
                                     ->required(),
                                 Forms\Components\TextInput::make('price')
+                                    ->mask(RawJs::make('$money($input)'))
+                                    ->stripCharacters(',')
                                     ->numeric()
                                     ->prefix('Rp.')                                    
-                                    ->required(),
+                                    ->required()
+                                    ->beforeStateDehydrated(fn ($state) => str_replace(',', '', $state))
                             ])
                             ->columns(2)                            
                             ->afterStateUpdated(function (callable $set, $get) {
                                 // Ambil semua detail invoice
                                 $detailInvoice = $get('detailInvoice') ?? [];
-
+                                
                                 // Hitung total dari semua harga
-                                $subTotal = collect($detailInvoice)->sum('price');
+                                $subTotal = collect($detailInvoice)->sum(function ($item) {
+                                    return (int) str_replace(',', '', $item['price'] ?? 0);
+                                });
 
                                 // Set nilai ke field sub_total
-                                $set('sub_total', $subTotal);
+                                $set('sub_total', number_format($subTotal, 0, '', ','));
                             })
                             ->defaultItems(1),
                     ]),
@@ -111,8 +117,11 @@ class InvoicesResource extends Resource
                             ->schema([
                                 Forms\Components\TextInput::make('sub_total')
                                     ->required()
+                                    ->mask(RawJs::make('$money($input)'))
+                                    ->stripCharacters(',')
                                     ->numeric()
-                                    ->default(0),                                    
+                                    ->default(0)
+                                    ->beforeStateDehydrated(fn ($state) => str_replace(',', '', $state)),                            
 
                                 Forms\Components\Toggle::make('is_pajak')
                                     ->label('Include Pajak?')
@@ -121,8 +130,11 @@ class InvoicesResource extends Resource
                                     
                                 Forms\Components\TextInput::make('diskon')
                                     ->required()
+                                    ->mask(RawJs::make('$money($input)'))
+                                    ->stripCharacters(',')
                                     ->numeric()
-                                    ->default(0),                                    
+                                    ->default(0)
+                                    ->beforeStateDehydrated(fn ($state) => str_replace(',', '', $state)),
 
                                 Forms\Components\TextInput::make('pajak')
                                 ->label(
@@ -135,16 +147,19 @@ class InvoicesResource extends Resource
                                    
                                 Forms\Components\TextInput::make('grand_total')
                                     ->required()
+                                   ->mask(RawJs::make('$money($input)'))
+                                    ->stripCharacters(',')
                                     ->numeric()
-                                    ->default(0)                                    
+                                    ->default(0)
+                                    ->beforeStateDehydrated(fn ($state) => str_replace(',', '', $state))                                
                                     ->hintAction(
                                         Forms\Components\Actions\Action::make('Recalculate')
                                             ->label('Recalculate Total')
                                             ->icon('heroicon-o-arrows-right-left')
                                             ->color('success')
                                             ->action(function (callable $get, callable $set) {
-                                                $subTotal = $get('sub_total') ?? 0;
-                                                $diskon = $get('diskon') ?? 0;
+                                                $subTotal = str_replace(',', '', $get('sub_total')) ?? 0;
+                                                $diskon = str_replace(',', '', $get('diskon')) ?? 0;
                                                 $isPajak = $get('is_pajak') ?? 0;
                                                 $pajakRate = Settings::getPajak() / 100;
 
@@ -155,8 +170,8 @@ class InvoicesResource extends Resource
                                                 $grandTotal = ($subTotal - $diskon) + $pajak;
 
                                                 // Set nilai pajak dan grand_total
-                                                $set('pajak', $pajak);
-                                                $set('grand_total', $grandTotal);
+                                                $set('pajak', number_format($pajak, 0, '', ','));
+                                                $set('grand_total', number_format($grandTotal, 0, '', ','));
                                             })
                                     ),
                             ]),
