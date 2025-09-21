@@ -41,7 +41,7 @@ class InvoiceController extends Controller
             'logoBase64' => $logoBase64
         ])->setOptions(['isRemoteEnabled' => true]);
         $name =  $invoice->no_invoice . '.pdf';
-        
+
         return $pdf->download($name);
     }
 
@@ -52,6 +52,7 @@ class InvoiceController extends Controller
         $clients = $invoice->Client; // Mengambil data Client terkait
         $PJ = $invoice->Employee; // Mengambil data Employee terkait
         $linkInvoice = url('/preview-invoice/' . $id);
+        $pajak = $invoice->pajak_rate / 100;
 
         //jika belum bayar
         if ($invoice->is_paid == 0) {
@@ -67,10 +68,10 @@ class InvoiceController extends Controller
 
             $message .= "\n";
             $message .= "Sub Total = Rp. " . number_format($invoice->sub_total, 0, ',', '.') . "\n";
-            if ($invoice->is_pajak != 0) {
-                $message .= "PPN 11% = Rp. " . number_format($invoice->sub_total * 0.11, 0, ',', '.') . "\n";
-            } else if ($invoice->diskon != 0) {
-                $message .= "Diskon = Rp. " . number_format($invoice->diskon, 0, ',', '.') . "\n";
+            if ($invoice->diskon != 0) {
+                $message .= "Diskon = Rp. " . number_format($invoice->diskon, 0, ',', '.') . "\n";                
+            } else if ($invoice->is_pajak != 0) {
+               $message .= "PPN(".$pajak."%) = Rp. " . number_format(($invoice->sub_total - $invoice->diskon) * $pajak, 0, ',', '.') . "\n";
             }
 
             $message .= "Total = Rp. " . number_format($invoice->grand_total, 0, ',', '.') . "\n\n";
@@ -114,10 +115,10 @@ class InvoiceController extends Controller
 
             $message .= "\n";
             $message .= "Sub Total = Rp. " . number_format($invoice->sub_total, 0, ',', '.') . "\n";
-            if ($invoice->is_pajak != 0) {
-                $message .= "PPN 11% = Rp. " . number_format($invoice->sub_total * 0.11, 0, ',', '.') . "\n";
-            } else if ($invoice->diskon != 0) {
-                $message .= "Diskon = Rp. " . number_format($invoice->diskon, 0, ',', '.') . "\n";
+            if ($invoice->diskon != 0) {
+                $message .= "Diskon = Rp. " . number_format($invoice->diskon, 0, ',', '.') . "\n";                
+            } else if ($invoice->is_pajak != 0) {
+               $message .= "PPN(".$pajak."%) = Rp. " . number_format(($invoice->sub_total - $invoice->diskon) * $pajak, 0, ',', '.') . "\n";
             }
 
             $message .= "Total = Rp. " . number_format($invoice->grand_total, 0, ',', '.') . "\n\n";
