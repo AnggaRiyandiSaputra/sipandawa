@@ -152,7 +152,7 @@ class InvoicesResource extends Resource
                                                 $pajak = $isPajak ? ($subTotal - $diskon) * $pajakRate : 0;
 
                                                 // Hitung grand total
-                                                $grandTotal = $subTotal - $diskon + $pajak;
+                                                $grandTotal = ($subTotal - $diskon) + $pajak;
 
                                                 // Set nilai pajak dan grand_total
                                                 $set('pajak', $pajak);
