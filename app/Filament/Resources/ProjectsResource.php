@@ -13,6 +13,7 @@ use Filament\Resources\Resource;
 use Filament\Forms\Components\Repeater;
 use App\Filament\Resources\ProjectsResource\Pages;
 use App\Models\Settings;
+use Filament\Support\RawJs;
 
 class ProjectsResource extends Resource
 {
@@ -101,23 +102,27 @@ class ProjectsResource extends Resource
                             ->schema([
                                 Forms\Components\TextInput::make('price')
                                     ->required()
+                                    ->mask(RawJs::make('$money($input)'))
+                                    ->stripCharacters(',')
                                     ->numeric()
                                     ->prefix('Rp.')
+                                    ->beforeStateDehydrated(fn ($state) => str_replace(',', '', $state))
                                     ->hintAction(
                                         Forms\Components\Actions\Action::make('Calculate')
                                             ->label('Calculate')
                                             ->icon('heroicon-o-arrows-right-left')
                                             ->color('success')
                                             ->action(function (callable $get, callable $set) {
-                                                $price = $get('price');
+                                                $price = $get('price');                                               
+                                                $price = str_replace(',', '', $price);
                                                 $pajak = self::getSettings()->pajak;
                                                 $kas = self::getSettings()->kas;
                                                 $komisi = self::getKomisi();
                                                 
                                                 if ($price) {
-                                                    $set('pajak', ($pajak / 100) * $price);
-                                                    $set('kas', ($kas / 100) * $price);
-                                                    $set('komisi', ($komisi / 100) * $price);
+                                                    $set('pajak', number_format((($pajak / 100) * $price), 0, '', ','));
+                                                    $set('kas', number_format((($kas / 100) * $price), 0, '', ','));
+                                                    $set('komisi', number_format((($komisi / 100) * $price), 0, '', ','));
                                                 } else {
                                                     $set('pajak', 0);
                                                     $set('kas', 0);
@@ -128,23 +133,35 @@ class ProjectsResource extends Resource
                                 Forms\Components\TextInput::make('pajak')
                                     ->label("Pajak(" . self::getSettings()->pajak . "% dari price)")
                                     ->required()
-                                    ->prefix('Rp.'),
+                                    ->mask(RawJs::make('$money($input)'))
+                                    ->stripCharacters(',')
+                                    ->numeric()
+                                    ->prefix('Rp.')
+                                    ->beforeStateDehydrated(fn ($state) => str_replace(',', '', $state)),
 
                                 Forms\Components\Hidden::make('pajak_rate')
                                     ->default(self::getSettings()->pajak),
                                   
                                 Forms\Components\TextInput::make('kas')
                                     ->label("Kas(" . self::getSettings()->kas . "% dari price)")
-                                    ->required()                                  
-                                    ->prefix('Rp.'),
+                                    ->required()   
+                                    ->mask(RawJs::make('$money($input)'))
+                                    ->stripCharacters(',')
+                                    ->numeric()                               
+                                    ->prefix('Rp.')
+                                    ->beforeStateDehydrated(fn ($state) => str_replace(',', '', $state)),
 
                                 Forms\Components\Hidden::make('kas_rate')
                                     ->default(self::getSettings()->kas),
 
                                 Forms\Components\TextInput::make('komisi')
                                     ->label("Komisi(" . self::getKomisi(). "% dari price)")
-                                    ->required()                                  
-                                    ->prefix('Rp.'),
+                                    ->required()
+                                    ->mask(RawJs::make('$money($input)'))
+                                    ->stripCharacters(',')
+                                    ->numeric()
+                                    ->prefix('Rp.')
+                                    ->beforeStateDehydrated(fn ($state) => str_replace(',', '', $state)),
                             ]),
                     ])->columnSpan([
                         1
