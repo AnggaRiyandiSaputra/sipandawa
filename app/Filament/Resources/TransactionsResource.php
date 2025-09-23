@@ -50,9 +50,7 @@ class TransactionsResource extends Resource
                             ->imageEditor()
                             ->downloadable()
                             ->openable()
-                            ->directory('transactions')
-                            ->optimize('webp')
-                            ->resize(50)
+                            ->directory('transactions')                           
                             ->acceptedFileTypes(['image/jpg', 'image/png', 'image/jpeg']),
                     ])
                     ->columns(2),
