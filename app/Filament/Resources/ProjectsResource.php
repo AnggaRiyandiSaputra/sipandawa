@@ -50,6 +50,12 @@ class ProjectsResource extends Resource
                                 Forms\Components\Select::make('client_id')
                                     ->label('client')
                                     ->relationship('client', 'name')
+                                    ->searchable()         
+                                    ->preload()       
+                                    ->loadingMessage('Loading client...')                    
+                                    ->noSearchResultsMessage('No client found.')
+                                    ->searchingMessage('Searching client...')
+                                    ->placeholder('Select a client')
                                     ->required(),
                                 Forms\Components\Textarea::make('description')
                                     ->columnSpanFull(),

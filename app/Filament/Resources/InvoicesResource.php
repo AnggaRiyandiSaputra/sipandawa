@@ -51,6 +51,12 @@ class InvoicesResource extends Resource
                                     ->required(),
                                 Forms\Components\Select::make('client_id')
                                     ->Relationship('Client', 'name')
+                                    ->searchable()         
+                                    ->preload()       
+                                    ->loadingMessage('Loading client...')                    
+                                    ->noSearchResultsMessage('No client found.')
+                                    ->searchingMessage('Searching client...')
+                                    ->placeholder('Select a client')
                                     ->required(),
                                 Forms\Components\TextInput::make('name')
                                     ->required()
